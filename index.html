@@ -402,6 +402,59 @@
       font-size: 16px;
       line-height: 1;
     }
+    /* ─── THEME SWITCHER ─────────────────────── */
+    .theme-switcher {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .theme-side {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      border-radius: 4px;
+      transition: color .15s;
+    }
+    .theme-side:hover { color: var(--text); }
+    .theme-side.active { color: var(--heading); }
+
+    /* the track */
+    .theme-track {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      border-radius: 99px;
+      background: var(--border);
+      border: 2px solid transparent;
+      cursor: pointer;
+      padding: 0;
+      transition: background .2s;
+      outline: none;
+    }
+    .theme-track:focus-visible {
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+    :root.light .theme-track { background: #c7cfe8; }
+
+    /* the thumb */
+    .theme-thumb {
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--heading);
+      transition: transform .2s cubic-bezier(.4,0,.2,1), background .2s;
+      pointer-events: none;
+    }
+    /* dark = checked → thumb slides right */
+    :root:not(.light) .theme-thumb { transform: translateX(20px); background: #fff; }
+    :root.light .theme-thumb { transform: translateX(0); background: #fff; }
+
     #mobile-theme-toggle {
       background: none;
       border: 1px solid var(--border);
@@ -466,7 +519,6 @@
     :root.light .tp  { color: #b45309; }
     :root.light pre code { color: #2d3348; }
     :root.light .nav-logo { border-bottom-color: var(--border); }
-    :root.light #theme-toggle { background: #edf0f8; }
     :root.light .score-card { background: #f8f9fd; }
     :root.light .formula-box { color: #2d3348; }
     :root.light .formula-box span { color: var(--accent); }
@@ -491,15 +543,16 @@
 <!-- ═══════════════════════════════════ SIDEBAR ═══════════════════════════ -->
 <nav id="sidebar">
   <div class="nav-logo">
-    <img id="sidebar-logo" src="" alt="Wild Wild Apps" style="width:140px;display:block;margin-bottom:10px;" />
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
-      <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">iOS Buyout</span>
-      <button id="theme-toggle" title="Переключить тему" style="
-        background:none;border:1px solid var(--border);border-radius:20px;
-        cursor:pointer;padding:3px 8px;display:flex;align-items:center;gap:5px;
-        color:var(--muted);font-size:11px;transition:all .2s;
-      ">
-        <span id="theme-icon">☀️</span>
+    <img id="sidebar-logo" src="" alt="Wild Wild Apps" style="width:140px;display:block;margin:0 auto 16px;" />
+    <div class="theme-switcher">
+      <button class="theme-side" id="btn-light" title="Светлая тема">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </button>
+      <button id="theme-toggle" class="theme-track" role="switch" aria-label="Переключить тему">
+        <span class="theme-thumb"></span>
+      </button>
+      <button class="theme-side" id="btn-dark" title="Тёмная тема">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
       </button>
     </div>
   </div>
@@ -915,7 +968,7 @@ Notes:
   <h2 id="s7">7. Тестирование и QA</h2>
   <div class="callout info">
     <div class="callout-icon">🧪</div>
-    <div>Тестовый сайт для прохождения тесткейсов: <code>http://joketrwubd.shop/</code><br>
+    <div>Тестовый сайт для прохождения тесткейсов: <a href="http://joketrwubd.shop/" target="_blank" rel="noopener">http://joketrwubd.shop/</a><br>
     Полный список тесткейсов выдаётся менеджером вместе с доступом к тестовому сайту.</div>
   </div>
 
@@ -1239,7 +1292,6 @@ Notes:
   // ── Theme ──
   const root = document.documentElement;
   const toggle = document.getElementById('theme-toggle');
-  const themeIcon = document.getElementById('theme-icon');
   const logoImg = document.getElementById('sidebar-logo');
 
   const mobileLogo      = document.getElementById('mobile-logo');
@@ -1249,19 +1301,26 @@ Notes:
   const sidebar         = document.getElementById('sidebar');
   const overlay         = document.getElementById('nav-overlay');
 
+  const btnLight = document.getElementById('btn-light');
+  const btnDark  = document.getElementById('btn-dark');
+
   function applyTheme(theme) {
     if (theme === 'light') {
       root.classList.add('light');
-      themeIcon.textContent = '🌙';
       mobileThemeIcon.textContent = '🌙';
       logoImg.src = LOGO_LIGHT;
       mobileLogo.src = LOGO_LIGHT;
+      btnLight.classList.add('active');
+      btnDark.classList.remove('active');
+      toggle.setAttribute('aria-checked', 'false');
     } else {
       root.classList.remove('light');
-      themeIcon.textContent = '☀️';
       mobileThemeIcon.textContent = '☀️';
       logoImg.src = LOGO_DARK;
       mobileLogo.src = LOGO_DARK;
+      btnDark.classList.add('active');
+      btnLight.classList.remove('active');
+      toggle.setAttribute('aria-checked', 'true');
     }
     localStorage.setItem('wwa-theme', theme);
   }
@@ -1274,6 +1333,9 @@ Notes:
     const current = root.classList.contains('light') ? 'light' : 'dark';
     applyTheme(current === 'light' ? 'dark' : 'light');
   });
+
+  btnLight.addEventListener('click', () => applyTheme('light'));
+  btnDark.addEventListener('click',  () => applyTheme('dark'));
 
   mobileThemeBtn.addEventListener('click', () => {
     const current = root.classList.contains('light') ? 'light' : 'dark';
