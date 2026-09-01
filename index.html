@@ -363,10 +363,96 @@
     td.danger  { color: var(--danger); font-weight: 600; }
     td.warn    { color: var(--warn); font-weight: 600; }
 
+    /* ─── INLINE LINKS ────────────────────────── */
+    main a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(79,124,255,.35);
+      transition: border-color .15s, color .15s;
+    }
+    main a:hover {
+      border-bottom-color: var(--accent);
+    }
+    :root.light main a {
+      border-bottom-color: rgba(37,87,247,.3);
+    }
+
+    /* ─── MOBILE HEADER ──────────────────────── */
+    #mobile-header {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      z-index: 200;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+    }
+    #mobile-header img { height: 28px; }
+    #mobile-header .spacer { flex: 1; }
+    #burger {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      cursor: pointer;
+      padding: 6px 10px;
+      font-size: 16px;
+      line-height: 1;
+    }
+    #mobile-theme-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 6px 8px;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    /* overlay when nav is open on mobile */
+    #nav-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 149;
+    }
+    #nav-overlay.visible { display: block; }
+
     @media (max-width: 900px) {
-      nav#sidebar { display: none; }
-      main { margin-left: 0; padding: 32px 20px 64px; }
-      .score-grid { grid-template-columns: repeat(2,1fr); }
+      #mobile-header { display: flex; }
+      nav#sidebar {
+        top: 0;
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+        z-index: 150;
+        /* hide desktop theme toggle & label inside sidebar on mobile */
+      }
+      nav#sidebar.open { transform: translateX(0); }
+      /* hide sidebar theme toggle on mobile — we have it in the header */
+      nav#sidebar #theme-toggle { display: none; }
+      main {
+        margin-left: 0;
+        padding: 72px 16px 64px;
+      }
+      .score-grid { grid-template-columns: repeat(2, 1fr); }
+      h1 { font-size: 22px; }
+      h2 { font-size: 17px; margin-top: 40px; }
+      pre { font-size: 11.5px; padding: 14px; }
+      .table-wrap { margin: 12px -4px; }
+      table { font-size: 12.5px; }
+      th, td { padding: 7px 10px; }
+      .flow { max-width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      .score-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .score-card { padding: 12px 8px; }
+      .score-card .range { font-size: 18px; }
+      main { padding: 68px 12px 64px; }
     }
   
     /* light mode specific fixes */
@@ -392,6 +478,15 @@
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════ MOBILE HEADER ═════════════════════ -->
+<div id="mobile-header">
+  <img id="mobile-logo" src="" alt="WWA" />
+  <div class="spacer"></div>
+  <button id="mobile-theme-toggle" title="Тема"><span id="mobile-theme-icon">☀️</span></button>
+  <button id="burger" title="Меню">☰</button>
+</div>
+<div id="nav-overlay"></div>
 
 <!-- ═══════════════════════════════════ SIDEBAR ═══════════════════════════ -->
 <nav id="sidebar">
@@ -467,14 +562,7 @@
   <h2 id="s1">1. Предмет и коммерческие условия</h2>
 
   <h3 id="s1-1">1.1 Что вы делаете</h3>
-  <p>Разрабатываете iOS-приложение, которое:</p>
-  <ul>
-    <li>реализует стартовый флоу с обращением к нашим сервисам (§4);</li>
-    <li>при выполнении условий сценария открывает WebView с оффером (§3.2);</li>
-    <li>в противном случае показывает белую часть (заглушку);</li>
-    <li>проходит все тесткейсы, соответствует WWA AppScore и требованиям к WebView;</li>
-    <li>опубликовано и живо в App Store.</li>
-  </ul>
+  <p>Объём работ включает разработку, интеграцию и публикацию iOS-приложения в App Store. Приложение должно реализовывать <a href="#s4">стартовый флоу</a> по спецификации §4, открывать <a href="#s3-2">WebView с оффером</a> при соблюдении условий сценария, корректно отображать <a href="#s5">заглушку</a> в остальных случаях, а также пройти все <a href="#s7">тесткейсы</a> и набрать проходной балл по системе <a href="#s2">WWA AppScore</a>.</p>
 
   <h3 id="s1-2">1.2 Что выкупаем</h3>
   <p>Приложение вместе с <strong>аккаунтом App Store Connect</strong> и <strong>почтой, на которую этот аккаунт зарегистрирован</strong>. Передача аккаунта — обязательное условие выкупа.</p>
@@ -1154,15 +1242,26 @@ Notes:
   const themeIcon = document.getElementById('theme-icon');
   const logoImg = document.getElementById('sidebar-logo');
 
+  const mobileLogo      = document.getElementById('mobile-logo');
+  const mobileThemeBtn  = document.getElementById('mobile-theme-toggle');
+  const mobileThemeIcon = document.getElementById('mobile-theme-icon');
+  const burger          = document.getElementById('burger');
+  const sidebar         = document.getElementById('sidebar');
+  const overlay         = document.getElementById('nav-overlay');
+
   function applyTheme(theme) {
     if (theme === 'light') {
       root.classList.add('light');
       themeIcon.textContent = '🌙';
+      mobileThemeIcon.textContent = '🌙';
       logoImg.src = LOGO_LIGHT;
+      mobileLogo.src = LOGO_LIGHT;
     } else {
       root.classList.remove('light');
       themeIcon.textContent = '☀️';
+      mobileThemeIcon.textContent = '☀️';
       logoImg.src = LOGO_DARK;
+      mobileLogo.src = LOGO_DARK;
     }
     localStorage.setItem('wwa-theme', theme);
   }
@@ -1174,6 +1273,35 @@ Notes:
   toggle.addEventListener('click', () => {
     const current = root.classList.contains('light') ? 'light' : 'dark';
     applyTheme(current === 'light' ? 'dark' : 'light');
+  });
+
+  mobileThemeBtn.addEventListener('click', () => {
+    const current = root.classList.contains('light') ? 'light' : 'dark';
+    applyTheme(current === 'light' ? 'dark' : 'light');
+  });
+
+  // ── Burger menu ──
+  function openNav() {
+    sidebar.classList.add('open');
+    overlay.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeNav() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+
+  burger.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? closeNav() : openNav();
+  });
+  overlay.addEventListener('click', closeNav);
+
+  // Close nav on link tap (mobile)
+  sidebar.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      if (window.innerWidth <= 900) closeNav();
+    });
   });
 
   // ── Active nav on scroll ──
